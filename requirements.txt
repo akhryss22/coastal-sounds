@@ -1,0 +1,44 @@
+# Coastal Sounds: AI-Powered Traditional Music Preservation
+# Requirements file for Streamlit application
+
+# Core Framework
+streamlit>=1.28.0
+
+# Machine Learning & AI
+torch>=2.0.0
+torchaudio>=2.0.0
+transformers>=4.30.0
+
+# Audio Processing
+librosa>=0.10.0
+scipy>=1.10.0
+soundfile>=0.12.0
+
+# Data Processing & Utilities
+numpy>=1.24.0
+pandas>=2.0.0
+
+# Optional: For actual MusicGen implementation
+# audiocraft-musicgen>=1.0.0  # Uncomment when implementing real MusicGen
+
+# Optional: Additional audio libraries
+# pydub>=0.25.0              # For additional audio format support
+# pyaudio>=0.2.11            # For real-time audio recording
+# wave>=0.0.2                # For WAV file handling
+
+# Web & API (if needed for deployment)
+# requests>=2.31.0           # For API calls
+# python-dotenv>=1.0.0       # For environment variables
+
+# Optional: Database support for persistent storage
+# sqlalchemy>=2.0.0          # For database operations
+# sqlite3                    # Built-in with Python
+
+# Optional: Cloud storage (for production deployment)
+# boto3>=1.28.0              # For AWS S3 storage
+# google-cloud-storage>=2.10.0  # For Google Cloud Storage
+
+# Development & Testing (optional)
+# pytest>=7.4.0             # For testing
+# black>=23.0.0              # For code formatting
+# flake8>=6.0.0              # For linting

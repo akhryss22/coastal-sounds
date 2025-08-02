@@ -1,0 +1,177 @@
+# Coastal Sounds - AI Music Preservation Platform
+# .gitignore file
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+coastal_sounds_env/
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# PyTorch model files and checkpoints
+*.pth
+*.pt
+models/
+checkpoints/
+*.ckpt
+
+# Audio files (large files should use Git LFS)
+*.wav
+*.mp3
+*.flac
+*.ogg
+*.m4a
+*.aac
+*.wma
+audio_data/
+recordings/
+generated_music/
+temp_audio/
+
+# Streamlit
+.streamlit/
+streamlit_cache/
+
+# Environment variables
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Logs
+*.log
+logs/
+streamlit.log
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+database/
+
+# Cache directories
+.cache/
+cache/
+__pycache__/
+.pytest_cache/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# AI Model downloads and cache
+transformers_cache/
+huggingface_cache/
+.cache/huggingface/
+.cache/torch/
+
+# Documentation build
+docs/_build/
+site/
+
+# MacOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Configuration files with sensitive data
+config_local.py
+secrets.json
+credentials.json
+
+# User uploaded content (consider Git LFS for large files)
+uploads/
+user_content/
+community_archive/
+
+# Development and testing
+test_audio/
+sample_data/
+experiments/
+
+# Deployment
+.vercel
+.netlify
+.railway
+
+# Cloud storage credentials
+google-credentials.json
+aws-credentials.json
+
+# Performance profiling
+*.prof
