@@ -4,42 +4,6 @@
 
 A Streamlit web application that bridges ancestral musical traditions with modern AI technology, designed to serve rural Filipino coastal communities by providing tools for music preservation and generation.
 
-## Project Overview
-
-Coastal Sounds addresses the critical need to preserve rapidly disappearing traditional Filipino coastal music. As younger generations migrate to urban areas, centuries-old musical traditions risk being lost forever. Our platform provides accessible tools for communities to document, enhance, and reimagine their cultural heritage using AI technology.
-
-### Core Mission
-- Preserve traditional music before it disappears
-- Empower coastal communities through accessible technology  
-- Connect Filipino diaspora communities with their cultural roots
-- Educate younger generations about their musical heritage
-
-## Key Features
-
-### Music Enhancement & Processing
-- Upload traditional recordings in multiple audio formats
-- AI-powered enhancement to improve audio quality
-- Generate instrumental backing tracks for vocals
-- Extend short recordings into full compositions
-- Automatic classification and tagging of musical content
-
-### AI Music Generation
-- Create new compositions inspired by Filipino coastal music
-- Specialized prompts for traditional instruments (kulintang, bamboo flute, gongs)
-- Generate music specific to different coastal regions
-- Create educational versions for learning traditional music
-
-### Community Archive
-- Searchable database of original and AI-enhanced recordings
-- Integration of cultural context, stories, and meanings
-- Comprehensive metadata by region, instrument, and cultural significance
-- Collaborative platform for cultural knowledge sharing
-
-### Music Discovery
-- Browse music by coastal regions and island communities
-- Organized by folk songs, ceremonial music, work songs, lullabies, and festivals
-- Educational content about traditional instruments and cultural significance
-
 ## Quick Start
 
 ### Prerequisites
