@@ -55,13 +55,6 @@ A web application that bridges ancestral musical traditions with modern AI techn
 3. **Browse Archive**: Search and explore preserved music with cultural context
 4. **Discover Heritage**: Explore music by region and learn about traditional instruments
 
-## Cultural Guidelines
-
-- **Respect Sacred Music**: Ensure proper permissions for ceremonial pieces
-- **Community Consent**: Always credit original performers and communities
-- **Cultural Authenticity**: Maintain respect for traditional meanings and contexts
-- **Educational Purpose**: Use AI generation responsibly for cultural preservation
-
 ## License
 
 This project is licensed under the MIT License. Traditional music and cultural content shared on this platform remain the intellectual property of their respective communities.
