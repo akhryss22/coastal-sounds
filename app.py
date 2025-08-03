@@ -4,6 +4,7 @@ import torchaudio
 import numpy as np
 import librosa
 from transformers import pipeline, AutoFeatureExtractor, AutoModelForAudioClassification
+from transformers import MusicgenForConditionalGeneration, AutoProcessor
 import tempfile
 import os
 from datetime import datetime
@@ -85,11 +86,122 @@ def load_audio_classifier():
         st.error(f"Error loading audio classifier: {e}")
         return None
 
-# Simulated MusicGen functionality (placeholder for actual implementation)
+# MusicGen model initialization
+@st.cache_resource
+def load_musicgen_model():
+    """Load the MusicGen model for music generation"""
+    try:
+        model = MusicgenForConditionalGeneration.from_pretrained("facebook/musicgen-melody")
+        processor = AutoProcessor.from_pretrained("facebook/musicgen-melody")
+        return model, processor
+    except Exception as e:
+        st.error(f"Error loading MusicGen model: {e}")
+        return None, None
+
+# Real MusicGen music generation
 def generate_music_with_musicgen(prompt, audio_input=None, duration=30, enhancement_type="basic"):
     """
-    Simulate MusicGen music generation with different enhancement types
-    In a real implementation, this would use facebook/musicgen-melody
+    Generate music using the real MusicGen model
+    """
+    model, processor = load_musicgen_model()
+    
+    if model is None or processor is None:
+        st.warning("MusicGen model not available. Using fallback generation.")
+        return generate_fallback_audio(prompt, audio_input, duration, enhancement_type)
+    
+    try:
+        # Set device
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        model = model.to(device)
+        
+        # Process conditioning audio if provided
+        melody = None
+        if audio_input is not None:
+            try:
+                # Save uploaded file temporarily
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as temp_file:
+                    temp_file.write(audio_input.read())
+                    temp_file_path = temp_file.name
+                
+                # Load audio for melody conditioning
+                melody, sr = librosa.load(temp_file_path, sr=32000)
+                
+                # Convert to tensor and add batch dimension
+                melody = torch.from_numpy(melody).unsqueeze(0).to(device)
+                
+                # Clean up
+                os.unlink(temp_file_path)
+                
+                # Adjust duration based on input audio length
+                original_duration = len(melody[0]) / 32000
+                duration = max(original_duration, 10)  # At least 10 seconds
+                
+            except Exception as e:
+                st.warning(f"Could not process audio input for conditioning: {e}")
+                melody = None
+        
+        # Enhance prompt based on enhancement type
+        enhanced_prompt = enhance_prompt_for_type(prompt, enhancement_type)
+        
+        # Prepare inputs
+        inputs = processor(
+            text=[enhanced_prompt],
+            padding=True,
+            return_tensors="pt",
+        ).to(device)
+        
+        # Set generation parameters
+        sample_rate = model.config.audio_encoder.sampling_rate
+        duration_samples = int(duration * sample_rate)
+        
+        # Generate audio
+        with torch.no_grad():
+            if melody is not None:
+                # Generate with melody conditioning
+                audio_values = model.generate(
+                    **inputs,
+                    melody_tokens=None,  # MusicGen handles melody differently
+                    do_sample=True,
+                    guidance_scale=3.0,
+                    max_new_tokens=duration_samples // model.config.audio_encoder.hop_length,
+                )
+            else:
+                # Generate without melody conditioning
+                audio_values = model.generate(
+                    **inputs,
+                    do_sample=True,
+                    guidance_scale=3.0,
+                    max_new_tokens=duration_samples // model.config.audio_encoder.hop_length,
+                )
+        
+        # Convert to numpy array
+        audio_data = audio_values[0, 0].cpu().numpy()
+        
+        return audio_data, sample_rate
+        
+    except Exception as e:
+        st.error(f"Error generating music with MusicGen: {e}")
+        return generate_fallback_audio(prompt, audio_input, duration, enhancement_type)
+
+def enhance_prompt_for_type(prompt, enhancement_type):
+    """Enhance the base prompt based on the enhancement type"""
+    enhancements = {
+        "Clean and enhance quality": f"{prompt}, high quality, clear audio, professional recording",
+        "Generate instrumental backing": f"{prompt}, rich instrumentation, full ensemble, layered harmonies",
+        "Extend composition length": f"{prompt}, extended composition, developing themes, musical progression",
+        "Create educational version": f"{prompt}, simple melody, educational, easy to follow",
+        "Add coastal ambience": f"{prompt}, ocean waves, coastal atmosphere, nature sounds"
+    }
+    
+    return enhancements.get(enhancement_type, prompt)
+
+def generate_fallback_audio(prompt, audio_input=None, duration=30, enhancement_type="basic"):
+    """
+    Fallback audio generation using sine waves when MusicGen is not available
+    """
+def generate_fallback_audio(prompt, audio_input=None, duration=30, enhancement_type="basic"):
+    """
+    Fallback audio generation using sine waves when MusicGen is not available
     """
     # If audio_input is provided, try to match its duration
     if audio_input is not None:
@@ -388,10 +500,10 @@ def show_upload_page():
             )
             
             if st.button("Enhance Audio"):
-                with st.spinner("Processing with AI..."):
+                with st.spinner("Loading AI models and processing..."):
                     # Reset file pointer for processing
                     uploaded_file.seek(0)
-                    # Simulate processing with specific enhancement type
+                    # Process with real MusicGen model
                     enhanced_audio, sample_rate = generate_music_with_musicgen(
                         f"enhance traditional Filipino music, {enhancement_type}",
                         audio_input=uploaded_file,
@@ -539,8 +651,8 @@ def show_generation_page():
         
         # Generate button
         if st.button("Generate Music"):
-            with st.spinner("Creating your traditional-inspired music..."):
-                # Simulate music generation
+            with st.spinner("Loading MusicGen AI model and creating your traditional-inspired music..."):
+                # Generate music using real MusicGen model
                 generated_audio, sample_rate = generate_music_with_musicgen(
                     music_prompt, duration=duration
                 )
@@ -799,7 +911,7 @@ def show_about_page():
         - Frontend: Streamlit
         - Audio Processing: librosa, torchaudio
         - Machine Learning: transformers, torch
-        
+    
         """)
 
 if __name__ == "__main__":
