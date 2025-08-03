@@ -2,7 +2,7 @@
 
 **Preserving Filipino coastal musical heritage through artificial intelligence**
 
-A web application that bridges ancestral musical traditions with modern AI technology, designed to serve rural Filipino coastal communities by providing tools for music preservation and generation.
+A web application designed to serve rural Filipino coastal communities by providing tools for music preservation and generation.
 
 ## Quick Start
 
