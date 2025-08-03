@@ -86,31 +86,110 @@ def load_audio_classifier():
         return None
 
 # Simulated MusicGen functionality (placeholder for actual implementation)
-def generate_music_with_musicgen(prompt, audio_input=None, duration=30):
+def generate_music_with_musicgen(prompt, audio_input=None, duration=30, enhancement_type="basic"):
     """
-    Simulate MusicGen music generation
+    Simulate MusicGen music generation with different enhancement types
     In a real implementation, this would use facebook/musicgen-melody
     """
-    # Generate a simple sine wave as placeholder
+    # If audio_input is provided, try to match its duration
+    if audio_input is not None:
+        try:
+            # Load the uploaded audio to get its duration
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as temp_file:
+                temp_file.write(audio_input.read())
+                temp_file_path = temp_file.name
+            
+            audio_data, sr = librosa.load(temp_file_path)
+            original_duration = len(audio_data) / sr
+            duration = max(original_duration, 10)  # At least 10 seconds
+            
+            # Clean up
+            os.unlink(temp_file_path)
+        except:
+            duration = 30  # Fallback
+    
     sample_rate = 32000
     duration_samples = int(duration * sample_rate)
     
-    # Create a simple melody pattern
-    frequencies = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25]  # C major scale
+    # Different enhancement types produce different sounds
+    if enhancement_type == "Clean and enhance quality":
+        # Cleaner, simpler melody
+        frequencies = [261.63, 293.66, 329.63, 349.23]  # Simple C major progression
+        volume = 0.4
+        wave_intensity = 0.1
+    elif enhancement_type == "Generate instrumental backing":
+        # Richer harmony with multiple layers
+        frequencies = [261.63, 329.63, 392.00, 523.25, 659.25]  # Extended harmony
+        volume = 0.3
+        wave_intensity = 0.15
+    elif enhancement_type == "Extend composition length":
+        # Longer, evolving melody
+        frequencies = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25, 587.33, 659.25]
+        volume = 0.35
+        wave_intensity = 0.12
+    elif enhancement_type == "Create educational version":
+        # Slower, simpler melody
+        frequencies = [261.63, 293.66, 329.63]  # Basic notes
+        volume = 0.5
+        wave_intensity = 0.05
+    elif enhancement_type == "Add coastal ambience":
+        # More ocean sounds, softer melody
+        frequencies = [261.63, 293.66, 329.63, 349.23, 392.00]
+        volume = 0.25
+        wave_intensity = 0.3
+    else:
+        # Default
+        frequencies = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25]
+        volume = 0.3
+        wave_intensity = 0.2
+    
+    # Create melody pattern
     audio_data = np.zeros(duration_samples)
     
+    # Generate melody with different patterns based on enhancement type
     for i, freq in enumerate(frequencies):
-        start_sample = int(i * duration_samples / len(frequencies))
-        end_sample = int((i + 1) * duration_samples / len(frequencies))
-        t = np.linspace(0, (end_sample - start_sample) / sample_rate, end_sample - start_sample)
-        audio_data[start_sample:end_sample] = 0.3 * np.sin(2 * np.pi * freq * t)
+        section_length = duration_samples // len(frequencies)
+        start_sample = int(i * section_length)
+        end_sample = int((i + 1) * section_length)
+        
+        if end_sample > duration_samples:
+            end_sample = duration_samples
+            
+        section_duration = (end_sample - start_sample) / sample_rate
+        t = np.linspace(0, section_duration, end_sample - start_sample)
+        
+        # Add some variation based on enhancement type
+        if enhancement_type == "Generate instrumental backing":
+            # Add harmonics
+            melody = volume * (np.sin(2 * np.pi * freq * t) + 
+                             0.3 * np.sin(2 * np.pi * freq * 1.5 * t) +
+                             0.2 * np.sin(2 * np.pi * freq * 2 * t))
+        elif enhancement_type == "Create educational version":
+            # Simple sine wave, no harmonics
+            melody = volume * np.sin(2 * np.pi * freq * t)
+        else:
+            # Standard melody with slight harmonics
+            melody = volume * (np.sin(2 * np.pi * freq * t) + 
+                             0.2 * np.sin(2 * np.pi * freq * 1.25 * t))
+        
+        audio_data[start_sample:end_sample] = melody
     
-    # Add some coastal ambience (wave sounds simulation)
-    noise = 0.1 * np.random.randn(duration_samples)
-    wave_freq = 0.5  # Low frequency for wave sounds
+    # Add coastal ambience based on enhancement type
     t_full = np.linspace(0, duration, duration_samples)
-    wave_sound = 0.2 * np.sin(2 * np.pi * wave_freq * t_full)
+    if enhancement_type == "Add coastal ambience":
+        # More prominent wave sounds
+        wave_freq = 0.3
+        wave_sound = wave_intensity * (np.sin(2 * np.pi * wave_freq * t_full) + 
+                                     0.5 * np.sin(2 * np.pi * wave_freq * 0.7 * t_full))
+    else:
+        # Subtle wave sounds
+        wave_freq = 0.5
+        wave_sound = wave_intensity * np.sin(2 * np.pi * wave_freq * t_full)
     
+    # Add gentle noise
+    noise = 0.05 * np.random.randn(duration_samples)
+    
+    # Combine all elements
     audio_data = audio_data + wave_sound + noise
     audio_data = np.clip(audio_data, -1.0, 1.0)
     
@@ -123,8 +202,19 @@ def analyze_audio_content(audio_file):
         return ["Unable to analyze audio"]
     
     try:
-        # Process audio file
-        results = classifier(audio_file)
+        # Save uploaded file temporarily and load as audio array
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as temp_file:
+            temp_file.write(audio_file.read())
+            temp_file_path = temp_file.name
+        
+        # Load audio using librosa
+        audio_array, sr = librosa.load(temp_file_path, sr=16000)  # Resample to 16kHz for model
+        
+        # Clean up temp file
+        os.unlink(temp_file_path)
+        
+        # Process with classifier
+        results = classifier(audio_array)
         return [f"{result['label']}: {result['score']:.3f}" for result in results[:5]]
     except Exception as e:
         return [f"Analysis error: {str(e)}"]
@@ -157,7 +247,7 @@ def main():
     """, unsafe_allow_html=True)
     
     # Sidebar navigation
-    st.sidebar.title("🎵 Navigation")
+    st.sidebar.title("Navigation")
     page = st.sidebar.selectbox(
         "Choose a feature:",
         ["Home", "Upload & Enhance", "Generate Music", "Community Archive", "Discover Music", "About"]
@@ -268,8 +358,8 @@ def show_upload_page():
         )
         
         # Audio recording (placeholder)
-        st.markdown("### 🎤 Record Live")
-        if st.button("🔴 Start Recording"):
+        st.markdown("### Record Live")
+        if st.button("Start Recording"):
             st.info("Live recording feature will be implemented with microphone access")
         
         if uploaded_file is not None:
@@ -299,14 +389,18 @@ def show_upload_page():
             
             if st.button("Enhance Audio"):
                 with st.spinner("Processing with AI..."):
-                    # Simulate processing
+                    # Reset file pointer for processing
+                    uploaded_file.seek(0)
+                    # Simulate processing with specific enhancement type
                     enhanced_audio, sample_rate = generate_music_with_musicgen(
-                        f"enhance traditional Filipino music, {enhancement_type}"
+                        f"enhance traditional Filipino music, {enhancement_type}",
+                        audio_input=uploaded_file,
+                        enhancement_type=enhancement_type
                     )
                 
                 st.markdown("""
                 <div class="success-message">
-                    ✅ Audio enhanced successfully! Listen to your enhanced version below.
+                    Audio enhanced successfully! Listen to your enhanced version below.
                 </div>
                 """, unsafe_allow_html=True)
                 
@@ -453,7 +547,7 @@ def show_generation_page():
             
             st.markdown("""
             <div class="success-message">
-                🎶 Music generated successfully! Your AI-created traditional-inspired piece is ready.
+                Music generated successfully! Your AI-created traditional-inspired piece is ready.
             </div>
             """, unsafe_allow_html=True)
             
@@ -484,7 +578,7 @@ def show_generation_page():
                     st.info("Click 'Generate Music' again for a new variation!")
     
     with col2:
-        st.markdown("### 🎯 Generation Tips")
+        st.markdown("### Generation Tips")
         
         st.markdown("""
         <div class="cultural-note">
@@ -499,7 +593,7 @@ def show_generation_page():
         """, unsafe_allow_html=True)
         
         # Example prompts
-        st.markdown("### 💡 Example Prompts")
+        st.markdown("### Example Prompts")
         examples = [
             "Peaceful kulintang with ocean waves for meditation",
             "Traditional fishing song with bamboo flute and gentle percussion",
@@ -555,7 +649,7 @@ def show_archive_page():
         if filter_type != "All" and item['metadata']['type'] != filter_type.lower():
             continue
         
-        with st.expander(f" {item['metadata'].get('prompt', item['metadata'].get('original_file', 'Untitled'))} - {item['timestamp'][:10]}"):
+        with st.expander(f"Audio {item['metadata'].get('prompt', item['metadata'].get('original_file', 'Untitled'))} - {item['timestamp'][:10]}"):
             col_audio, col_meta = st.columns([2, 1])
             
             with col_audio:
@@ -604,12 +698,12 @@ def show_discovery_page():
     category_cols = st.columns(3)
     
     categories = [
-        {"name": "🎵 Folk Songs", "count": "15+"},
-        {"name": "🎪 Ceremonial", "count": "8+"},
-        {"name": "🌊 Work Songs", "count": "12+"},
-        {"name": "👶 Lullabies", "count": "6+"},
-        {"name": "🎉 Festival", "count": "10+"},
-        {"name": "🎣 Fishing Songs", "count": "7+"}
+        {"name": "Folk Songs", "count": "15+"},
+        {"name": "Ceremonial", "count": "8+"},
+        {"name": "Work Songs", "count": "12+"},
+        {"name": "Lullabies", "count": "6+"},
+        {"name": "Festival", "count": "10+"},
+        {"name": "Fishing Songs", "count": "7+"}
     ]
     
     for i, category in enumerate(categories):
@@ -636,7 +730,7 @@ def show_discovery_page():
     ]
     
     for insight in insights:
-        with st.expander(f"{insight['title']}"):
+        with st.expander(f"Read: {insight['title']}"):
             st.write(insight['content'])
 
 def show_about_page():
@@ -645,7 +739,7 @@ def show_about_page():
     
     st.markdown("""
     <div class="feature-card">
-        <h2>🌊 Our Mission</h2>
+        <h2>Our Mission</h2>
         <p>Coastal Sounds is dedicated to preserving and reimagining traditional Filipino coastal music through the power of artificial intelligence. We bridge the gap between ancestral musical traditions and modern technology, ensuring that the rich cultural heritage of coastal communities is preserved for future generations.</p>
     </div>
     """, unsafe_allow_html=True)
@@ -679,7 +773,7 @@ def show_about_page():
         - **Economic Opportunity**: Platform for cultural sharing
         """)
         
-        st.markdown("### 🤝 Community Guidelines")
+        st.markdown("### Community Guidelines")
         st.markdown("""
         - **Respect**: Honor the cultural significance of traditional music
         - **Permission**: Ensure proper consent for sacred/ceremonial pieces
@@ -693,6 +787,20 @@ def show_about_page():
         <p>This project is built for Hack With The Beat Hackathon. Askia Khryss, the sole creator, built this with deep respect for Filipino coastal communities and their musical traditions. I acknowledge the wisdom of elders, the creativity of traditional musicians, and the importance of cultural preservation in our rapidly changing world.</p>
     </div>
     """, unsafe_allow_html=True)
+    
+    # Technical information
+    with st.expander("Technical Information"):
+        st.markdown("""
+        **AI Models Used:**
+        - facebook/musicgen-melody for music generation
+        - MIT/ast-finetuned-audioset-10-10-0.4593 for audio classification
+        
+        **Framework:**
+        - Frontend: Streamlit
+        - Audio Processing: librosa, torchaudio
+        - Machine Learning: transformers, torch
+        
+        """)
 
 if __name__ == "__main__":
     main()
