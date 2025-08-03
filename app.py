@@ -118,9 +118,14 @@ def generate_music_with_musicgen(prompt, audio_input=None, duration=30, enhancem
         melody = None
         if audio_input is not None:
             try:
-                # Save uploaded file temporarily
+                # Create temporary file from BytesIO object
                 with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as temp_file:
-                    temp_file.write(audio_input.read())
+                    # Handle both file objects and BytesIO objects
+                    if hasattr(audio_input, 'getvalue'):
+                        temp_file.write(audio_input.getvalue())
+                    else:
+                        audio_input.seek(0)
+                        temp_file.write(audio_input.read())
                     temp_file_path = temp_file.name
                 
                 # Load audio for melody conditioning
@@ -524,14 +529,20 @@ def show_upload_page():
             
             if st.button("Enhance Audio"):
                 with st.spinner("Loading AI models and processing..."):
-                    # Reset file pointer for processing
-                    uploaded_file.seek(0)
-                    # Process with real MusicGen model
-                    enhanced_audio, sample_rate = generate_music_with_musicgen(
-                        f"enhance traditional Filipino music, {enhancement_type}",
-                        audio_input=uploaded_file,
-                        enhancement_type=enhancement_type
-                    )
+                    try:
+                        # Create a copy of the uploaded file to avoid pointer issues
+                        audio_bytes = uploaded_file.getvalue()
+                        audio_copy = BytesIO(audio_bytes)
+                        
+                        # Process with real MusicGen model
+                        enhanced_audio, sample_rate = generate_music_with_musicgen(
+                            f"enhance traditional Filipino music, {enhancement_type}",
+                            audio_input=audio_copy,
+                            enhancement_type=enhancement_type
+                        )
+                    except Exception as e:
+                        st.error(f"Enhancement failed: {str(e)}")
+                        st.stop()
                 
                 st.markdown("""
                 <div class="success-message">
@@ -934,7 +945,7 @@ def show_about_page():
         - Frontend: Streamlit
         - Audio Processing: librosa, torchaudio
         - Machine Learning: transformers, torch
-        
+       
         """)
 
 if __name__ == "__main__":
