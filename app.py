@@ -203,6 +203,9 @@ def generate_fallback_audio(prompt, audio_input=None, duration=30, enhancement_t
     """
     Fallback audio generation using sine waves when MusicGen is not available
     """
+    # Set a random seed based on current time and prompt for variation
+    np.random.seed(hash(str(datetime.now()) + prompt + enhancement_type) % (2**32))
+    
     # If audio_input is provided, try to match its duration
     if audio_input is not None:
         try:
@@ -223,42 +226,49 @@ def generate_fallback_audio(prompt, audio_input=None, duration=30, enhancement_t
     sample_rate = 32000
     duration_samples = int(duration * sample_rate)
     
-    # Different enhancement types produce different sounds
-    if enhancement_type == "Clean and enhance quality":
-        # Cleaner, simpler melody
-        frequencies = [261.63, 293.66, 329.63, 349.23]  # Simple C major progression
-        volume = 0.4
-        wave_intensity = 0.1
-    elif enhancement_type == "Generate instrumental backing":
-        # Richer harmony with multiple layers
-        frequencies = [261.63, 329.63, 392.00, 523.25, 659.25]  # Extended harmony
-        volume = 0.3
-        wave_intensity = 0.15
-    elif enhancement_type == "Extend composition length":
-        # Longer, evolving melody
-        frequencies = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25, 587.33, 659.25]
-        volume = 0.35
-        wave_intensity = 0.12
-    elif enhancement_type == "Create educational version":
-        # Slower, simpler melody
-        frequencies = [261.63, 293.66, 329.63]  # Basic notes
-        volume = 0.5
-        wave_intensity = 0.05
-    elif enhancement_type == "Add coastal ambience":
-        # More ocean sounds, softer melody
-        frequencies = [261.63, 293.66, 329.63, 349.23, 392.00]
-        volume = 0.25
-        wave_intensity = 0.3
-    else:
-        # Default
-        frequencies = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25]
-        volume = 0.3
-        wave_intensity = 0.2
+    # Add randomization to base frequencies
+    base_frequencies = {
+        "Clean and enhance quality": [261.63, 293.66, 329.63, 349.23],
+        "Generate instrumental backing": [261.63, 329.63, 392.00, 523.25, 659.25],
+        "Extend composition length": [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25, 587.33, 659.25],
+        "Create educational version": [261.63, 293.66, 329.63],
+        "Add coastal ambience": [261.63, 293.66, 329.63, 349.23, 392.00],
+        "basic": [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25]
+    }
     
-    # Create melody pattern
+    frequencies = base_frequencies.get(enhancement_type, base_frequencies["basic"])
+    
+    # Add random variations to frequencies (±5% variation)
+    frequencies = [freq * (1 + np.random.uniform(-0.05, 0.05)) for freq in frequencies]
+    
+    # Randomize order occasionally
+    if np.random.random() > 0.5:
+        np.random.shuffle(frequencies)
+    
+    # Different enhancement types produce different sounds with randomization
+    if enhancement_type == "Clean and enhance quality":
+        volume = 0.4 + np.random.uniform(-0.1, 0.1)
+        wave_intensity = 0.1 + np.random.uniform(-0.03, 0.03)
+    elif enhancement_type == "Generate instrumental backing":
+        volume = 0.3 + np.random.uniform(-0.05, 0.05)
+        wave_intensity = 0.15 + np.random.uniform(-0.05, 0.05)
+    elif enhancement_type == "Extend composition length":
+        volume = 0.35 + np.random.uniform(-0.05, 0.05)
+        wave_intensity = 0.12 + np.random.uniform(-0.03, 0.03)
+    elif enhancement_type == "Create educational version":
+        volume = 0.5 + np.random.uniform(-0.1, 0.1)
+        wave_intensity = 0.05 + np.random.uniform(-0.02, 0.02)
+    elif enhancement_type == "Add coastal ambience":
+        volume = 0.25 + np.random.uniform(-0.05, 0.05)
+        wave_intensity = 0.3 + np.random.uniform(-0.1, 0.1)
+    else:
+        volume = 0.3 + np.random.uniform(-0.05, 0.05)
+        wave_intensity = 0.2 + np.random.uniform(-0.05, 0.05)
+    
+    # Create melody pattern with randomization
     audio_data = np.zeros(duration_samples)
     
-    # Generate melody with different patterns based on enhancement type
+    # Generate melody with different patterns and randomization
     for i, freq in enumerate(frequencies):
         section_length = duration_samples // len(frequencies)
         start_sample = int(i * section_length)
@@ -270,36 +280,49 @@ def generate_fallback_audio(prompt, audio_input=None, duration=30, enhancement_t
         section_duration = (end_sample - start_sample) / sample_rate
         t = np.linspace(0, section_duration, end_sample - start_sample)
         
-        # Add some variation based on enhancement type
+        # Add random phase shift
+        phase_shift = np.random.uniform(0, 2 * np.pi)
+        
+        # Add some variation based on enhancement type with randomization
         if enhancement_type == "Generate instrumental backing":
-            # Add harmonics
-            melody = volume * (np.sin(2 * np.pi * freq * t) + 
-                             0.3 * np.sin(2 * np.pi * freq * 1.5 * t) +
-                             0.2 * np.sin(2 * np.pi * freq * 2 * t))
+            # Add harmonics with random variations
+            harmonic1 = 1.5 + np.random.uniform(-0.1, 0.1)
+            harmonic2 = 2.0 + np.random.uniform(-0.2, 0.2)
+            melody = volume * (np.sin(2 * np.pi * freq * t + phase_shift) + 
+                             0.3 * np.sin(2 * np.pi * freq * harmonic1 * t) +
+                             0.2 * np.sin(2 * np.pi * freq * harmonic2 * t))
         elif enhancement_type == "Create educational version":
-            # Simple sine wave, no harmonics
-            melody = volume * np.sin(2 * np.pi * freq * t)
+            # Simple sine wave with slight random variation
+            melody = volume * np.sin(2 * np.pi * freq * t + phase_shift)
         else:
-            # Standard melody with slight harmonics
-            melody = volume * (np.sin(2 * np.pi * freq * t) + 
-                             0.2 * np.sin(2 * np.pi * freq * 1.25 * t))
+            # Standard melody with slight harmonics and randomization
+            harmonic = 1.25 + np.random.uniform(-0.05, 0.05)
+            melody = volume * (np.sin(2 * np.pi * freq * t + phase_shift) + 
+                             0.2 * np.sin(2 * np.pi * freq * harmonic * t))
+        
+        # Add envelope for more natural sound
+        envelope = np.exp(-t * np.random.uniform(0.1, 0.5))
+        melody = melody * envelope
         
         audio_data[start_sample:end_sample] = melody
     
-    # Add coastal ambience based on enhancement type
+    # Add coastal ambience with randomization
     t_full = np.linspace(0, duration, duration_samples)
+    wave_freq_base = 0.3 if enhancement_type == "Add coastal ambience" else 0.5
+    wave_freq = wave_freq_base + np.random.uniform(-0.1, 0.1)
+    
     if enhancement_type == "Add coastal ambience":
-        # More prominent wave sounds
-        wave_freq = 0.3
+        # More prominent wave sounds with variations
+        wave_freq2 = 0.7 + np.random.uniform(-0.1, 0.1)
         wave_sound = wave_intensity * (np.sin(2 * np.pi * wave_freq * t_full) + 
-                                     0.5 * np.sin(2 * np.pi * wave_freq * 0.7 * t_full))
+                                     0.5 * np.sin(2 * np.pi * wave_freq2 * t_full))
     else:
         # Subtle wave sounds
-        wave_freq = 0.5
         wave_sound = wave_intensity * np.sin(2 * np.pi * wave_freq * t_full)
     
-    # Add gentle noise
-    noise = 0.05 * np.random.randn(duration_samples)
+    # Add gentle noise with variation
+    noise_level = 0.05 + np.random.uniform(-0.02, 0.02)
+    noise = noise_level * np.random.randn(duration_samples)
     
     # Combine all elements
     audio_data = audio_data + wave_sound + noise
@@ -911,7 +934,7 @@ def show_about_page():
         - Frontend: Streamlit
         - Audio Processing: librosa, torchaudio
         - Machine Learning: transformers, torch
-    
+        
         """)
 
 if __name__ == "__main__":
